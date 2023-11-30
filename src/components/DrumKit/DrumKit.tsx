@@ -1,75 +1,22 @@
 import { useEffect, useState } from 'react'
 import s from './DrumKit.module.css'
-import clap from './sounds/clap.wav'
-import hihat from './sounds/hihat.wav'
-import kick from './sounds/kick.wav'
-import openhat from './sounds/openhat.wav'
-import boom from './sounds/boom.wav'
-import ride from './sounds/ride.wav'
-import snare from './sounds/snare.wav'
-import tom from './sounds/tom.wav'
-import tink from './sounds/tink.wav'
+import { TDrumKitKeys } from '../../types'
 
-const drumKitKeys = [
-    {
-        key: 'A',
-        name: 'CLAP',
-        dataKey: 65
-    },
-    {
-        key: 'S',
-        name: 'HIHAT',
-        dataKey: 83
-    },
-    {
-        key: 'D',
-        name: 'KICK',
-        dataKey: 68
-    },
-    {
-        key: 'F',
-        name: 'OPENHAT',
-        dataKey: 70
-    },
-    {
-        key: 'G',
-        name: 'BOOM',
-        dataKey: 71
-    },
-    {
-        key: 'H',
-        name: 'RIDE',
-        dataKey: 72
-    },
-    {
-        key: 'J',
-        name: 'SNARE',
-        dataKey: 74
-    },
-    {
-        key: 'K',
-        name: 'TOM',
-        dataKey: 75
-    },
-    {
-        key: 'L',
-        name: 'TINK',
-        dataKey: 76
-    },
-]
-
-export const DrumKit = () => {
-    const [playing, setPlaying] = useState<number | null | undefined>(null)
+export const DrumKit = ({drumKitKeys}: {drumKitKeys: TDrumKitKeys}) => {
+    const [playing, setPlaying] = useState<number | null>()
 
     useEffect(()=> {
-        window.addEventListener('keydown', (e: KeyboardEvent) => playSound(e))
+        const keydown = (e: KeyboardEvent) => playSound(e)
+        window.addEventListener('keydown', keydown)
 
-        const keys = document.querySelectorAll('.key')
+        const removeTransition = () => setPlaying(null)
+        const keys = document.querySelectorAll('.drumKey')
+        keys.forEach(key => key.addEventListener('transitionend', removeTransition)) 
 
-        // remove transition
-        keys.forEach(key => 
-            key.addEventListener('transitionend', () => setPlaying(null))
-        ) 
+        return () => {
+            window.removeEventListener('keydown', keydown)
+            keys.forEach(key => key.removeEventListener('transitionend', removeTransition)) 
+        } 
     }, [])
 
     const playSound = (event?: KeyboardEvent, keyCode?: number) => {
@@ -88,12 +35,12 @@ export const DrumKit = () => {
     return (
         <div className={s.container}>
             <div className={s.keysContainer} >
-                <div className={`${s.keys} key`}>
+                <div className={`${s.keys} drumKey`}>
                     {
                        drumKitKeys.map(el => (
                         <button 
                             key={el.key}
-                            className={`${s.drumKeyBtn} ${playing == el.dataKey ? s.playing: ''} `}
+                            className={`${s.drumKeyBtn} ${playing === el.dataKey ? s.playing: ''} `}
                             onClick={() => playSound(undefined, el.dataKey)}
                         >
                             <kbd className={s.drumKey}>{el.key}</kbd>
@@ -103,15 +50,11 @@ export const DrumKit = () => {
                     }
                 </div>
             </div>
-            <audio data-key='65' src={clap}/>
-            <audio data-key='83' src={hihat}/>
-            <audio data-key='68' src={kick}/>
-            <audio data-key='70' src={openhat}/>
-            <audio data-key='71' src={boom}/>
-            <audio data-key='72' src={ride}/>
-            <audio data-key='74' src={snare}/>
-            <audio data-key='75' src={tom}/>
-            <audio data-key='76' src={tink}/>
+            {
+                drumKitKeys.map(el => (
+                    <audio data-key={`${el.dataKey}`} src={el.src} key={el.key}/>
+                ))
+            }
         </div>
     )
 }
